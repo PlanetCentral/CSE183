@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>2023 Simplified Tax Form</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css" />
+    <style>
+        input[readonly] {
+            background-color: #f5f5f5;
+        }
+
+        td {
+            vertical-align: top;
+        }
+
+        table {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title">2023 Simplified Tax Form</h1>
+            <form id="tax-form">
+                <table class="table is-bordered">
+                    <tbody>
+                        <tr class="row-1">
+                            <td>Income</td>
+                            <td><strong>1</strong> Wages, salaries, and tips. This should be shown in box 1 of your
+                                Form(s) W-2.</td>
+                            <td><input class="input" name="value-1" id="value-1" type="number" /></td>
+                        </tr>
+                        <tr class="row-2">
+                            <td></td>
+                            <td><strong>2</strong> Taxable interest from 1099 forms</td>
+                            <td><input class="input" name="value-2" id="value-2" type="number" /></td>
+                        </tr>
+                        <tr class="row-3">
+                            <td></td>
+                            <td><strong>3</strong> Other income not included in 1 and 2.</td>
+                            <td><input class="input" name="value-3" id="value-3" type="number" /></td>
+                        </tr>
+                        <tr class="row-4">
+                            <td></td>
+                            <td><strong>4</strong> Add lines 1, 2, and 3. This is your adjusted gross income.</td>
+                            <td><input class="input" name="value-4" id="value-4" type="number" readonly /></td>
+                        </tr>
+                        <tr class="row-5">
+                            <td></td>
+                            <td>
+                                <strong>5</strong> If this is a joint return, add your spouse as a dependent.<br />
+                                Write $13,850 for an individual return and $27,700 for a joint return.<br />
+                                Spouse <input type="checkbox" id="filing-jointly" />
+                            </td>
+                            <td><input class="input" name="value-5" id="value-5" type="number" readonly /></td>
+                        </tr>
+                        <tr class="row-6">
+                            <td></td>
+                            <td><strong>6</strong> Subtract line 5 from line 4. If line 5 is larger than line 4, enter
+                                -0-. This is your taxable income.</td>
+                            <td><input class="input" name="value-6" id="value-6" type="number" readonly /></td>
+                        </tr>
+                        <tr class="row-7">
+                            <td>Payments, Credits, and Tax</td>
+                            <td><strong>7</strong> Federal income tax withheld from Form(s) W-2 and 1099.</td>
+                            <td><input class="input" name="value-7" id="value-7" type="number" /></td>
+                        </tr>
+                        <tr class="row-8">
+                            <td></td>
+                            <td><strong>8</strong> Earned income credit (EIC)</td>
+                            <td><input class="input" name="value-8" id="value-8" type="number" /></td>
+                        </tr>
+                        <tr class="row-9">
+                            <td></td>
+                            <td><strong>9</strong> Add lines 7 and 8a. These are your total payments and credits.</td>
+                            <td><input class="input" name="value-9" id="value-9" type="number" readonly /></td>
+                        </tr>
+                        <tr class="row-10">
+                            <td></td>
+                            <td><strong>10</strong> Tax. Use the amount on line 6 to find your tax using the tax table
+                                in the instructions.</td>
+                            <td><input class="input" name="value-10" id="value-10" type="number" readonly /></td>
+                        </tr>
+                        <tr class="row-11">
+                            <td></td>
+                            <td><strong>11</strong> Other Taxes</td>
+                            <td><input class="input" name="value-11" id="value-11" type="number" /></td>
+                        </tr>
+                        <tr class="row-12">
+                            <td></td>
+                            <td><strong>12</strong> Add lines 10 and 11. This is your total tax.</td>
+                            <td><input class="input" name="value-12" id="value-12" type="number" readonly /></td>
+                        </tr>
+                        <tr class="row-13">
+                            <td>Refund</td>
+                            <td><strong>13</strong> If line 9 is larger than line 12, subtract line 12 from line 9. This
+                                is your refund.</td>
+                            <td><input class="input" name="value-13" id="value-13" type="number" readonly /></td>
+                        </tr>
+                        <tr class="row-14">
+                            <td>Amount you owe</td>
+                            <td><strong>14</strong> If line 12 is larger than line 9, subtract line 9 from line 12. This
+                                is the amount you owe.</td>
+                            <td><input class="input" name="value-14" id="value-14" type="number" readonly /></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </section>
+
+    <script>
+        const rates = [
+            [10, 0, 0],
+            [12, 11000, 22000],
+            [22, 44725, 89450],
+            [24, 95375, 190750],
+            [32, 182100, 364200],
+            [35, 231250, 462500],
+            [37, 578125, 693750],
+        ];
+
+        function getFilingThreshold(joint) {
+            return joint ? 27700 : 13850;
+        }
+
+        function computeTax(income, joint) {
+            let tax = 0;
+            const index = joint ? 2 : 1;
+            for (let i = rates.length - 1; i >= 0; i--) {
+                const [rate, single, joint] = rates[i];
+                const threshold = rates[i][index];
+                if (income > threshold) {
+                    tax += (income - threshold) * (rate / 100);
+                    income = threshold;
+                }
+            }
+            return tax;
+        }
+
+        function updateForm() {
+            const g = id => parseFloat(document.getElementById(id).value) || 0;
+            const isJoint = document.getElementById("filing-jointly").checked;
+
+            const line4 = g("value-1") + g("value-2") + g("value-3");
+            document.getElementById("value-4").value = line4;
+
+            const line5 = getFilingThreshold(isJoint);
+            document.getElementById("value-5").value = line5;
+
+            const line6 = Math.max(0, line4 - line5);
+            document.getElementById("value-6").value = line6;
+
+            const line9 = g("value-7") + g("value-8");
+            document.getElementById("value-9").value = line9;
+
+            const line10 = computeTax(line6, isJoint);
+            document.getElementById("value-10").value = line10;
+
+            const line12 = line10 + g("value-11");
+            document.getElementById("value-12").value = line12;
+
+            const line13 = Math.max(0, line9 - line12);
+            document.getElementById("value-13").value = line13;
+
+            const line14 = Math.max(0, line12 - line9);
+            document.getElementById("value-14").value = line14;
+        }
+
+        document.addEventListener("input", updateForm);
+        document.getElementById("filing-jointly").addEventListener("change", updateForm);
+        updateForm(); //updates 
+
+    </script>
+</body>
+
+</html>
